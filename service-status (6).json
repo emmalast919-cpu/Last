@@ -1,0 +1,29 @@
+{
+  "bot": "operational",
+  "lavalink": "operational",
+  "commands": "operational",
+  "playlists": "operational",
+  "lastfm": "operational",
+  "ai": "operational",
+  "website": "operational",
+  "database": "operational",
+  "api": "operational",
+  "filters": "operational",
+  "lyrics": "operational",
+  "maintenance": false,
+  "announcement": "",
+  "reasons": {
+    "bot": "Bot is currently offline for unexpected restarts.",
+    "lavalink": "Music server is temporarily unavailable.",
+    "commands": "Some slash commands may respond slowly.",
+    "playlists": "",
+    "lastfm": "Last.fm scrobbling and chart features are experiencing delays.",
+    "ai": "",
+    "website": "",
+    "database": "",
+    "api": "",
+    "filters": "",
+    "lyrics": ""
+  },
+  "updated_at": "2026-03-25T16:00:00Z"
+}

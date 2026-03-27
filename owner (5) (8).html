@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Owner Panel — Aimo</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/png" href="aimo-logo.png" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── LAYOUT ─────────────────────────────────────────────── */
+    body { background: #13111a; }
+
+    /* ── PASSWORD GATE ───────────────────────────────────────── */
+    #gate {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem;
+      background: radial-gradient(ellipse 70% 55% at 50% 25%, rgba(167,139,250,0.12) 0%, transparent 65%);
+    }
+    .gate-card {
+      background: #1a1826; border: 1.5px solid #2a2840;
+      border-radius: 20px; padding: 2.5rem 2rem; width: 100%; max-width: 380px;
+      display: flex; flex-direction: column; align-items: center; gap: 1.5rem;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.5);
+    }
+    .gate-logo { width: 56px; height: 56px; border-radius: 14px; }
+    .gate-title {
+      font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0;
+      background: linear-gradient(135deg, #f472b6, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .gate-sub { font-size: 0.85rem; color: #8878aa; margin: -0.75rem 0 0; text-align: center; }
+    .gate-form { width: 100%; display: flex; flex-direction: column; gap: 0.85rem; }
+    .gate-input-wrap { position: relative; }
+    .gate-input {
+      width: 100%; box-sizing: border-box;
+      background: #13111a; border: 1.5px solid #2a2840; border-radius: 12px;
+      padding: 0.85rem 3rem 0.85rem 1rem; color: #fff; font-size: 0.95rem;
+      font-family: inherit; outline: none; transition: border-color 0.2s;
+    }
+    .gate-input:focus { border-color: #a78bfa; }
+    .gate-input.err  { border-color: #f87171; }
+    .gate-eye {
+      position: absolute; right: 0.85rem; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: #8878aa; cursor: pointer; padding: 0;
+      display: flex; align-items: center;
+    }
+    .gate-eye svg { width: 18px; height: 18px; }
+    .gate-btn {
+      width: 100%; padding: 0.85rem; border: none; border-radius: 12px; cursor: pointer;
+      font-size: 0.95rem; font-weight: 700; font-family: inherit;
+      background: linear-gradient(135deg, #f472b6, #a78bfa);
+      color: #fff; transition: opacity 0.2s, transform 0.15s;
+    }
+    .gate-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .gate-btn:active { transform: none; }
+    .gate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .gate-error {
+      font-size: 0.82rem; color: #f87171; text-align: center;
+      min-height: 1.2em; margin: -0.4rem 0 0;
+    }
+    .gate-hint {
+      font-size: 0.78rem; color: #5c5278; text-align: center;
+    }
+
+    /* ── PANEL HEADER ────────────────────────────────────────── */
+    #panel { display: none; min-height: 100vh; }
+    .panel-topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(19,17,26,0.92); backdrop-filter: blur(12px);
+      border-bottom: 1px solid #2a2840;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.85rem 1.5rem; gap: 1rem;
+    }
+    .panel-brand { display: flex; align-items: center; gap: 0.65rem; }
+    .panel-brand img { width: 32px; height: 32px; border-radius: 8px; }
+    .panel-brand-name { font-weight: 800; font-size: 1rem; color: #fff; }
+    .panel-brand-badge {
+      font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.55rem;
+      border-radius: 100px; background: rgba(244,114,182,0.15);
+      color: #f472b6; border: 1px solid rgba(244,114,182,0.3);
+    }
+    .panel-topbar-right { display: flex; align-items: center; gap: 0.75rem; }
+    .panel-status-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: #4ade80;
+      box-shadow: 0 0 8px #4ade80; animation: pulse-glow 2s infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.6; transform: scale(1.3); }
+    }
+    .panel-session { font-size: 0.8rem; color: #8878aa; }
+    .logout-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.45rem 1rem; border-radius: 10px; cursor: pointer;
+      font-size: 0.82rem; font-weight: 600; font-family: inherit;
+      background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.25);
+      color: #f87171; transition: background 0.2s;
+    }
+    .logout-btn:hover { background: rgba(248,113,113,0.22); }
+    .logout-btn svg { width: 14px; height: 14px; }
+
+    /* ── PANEL BODY ──────────────────────────────────────────── */
+    .panel-body {
+      max-width: 900px; margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      display: flex; flex-direction: column; gap: 1.75rem;
+    }
+
+    /* ── SECTION CARD ────────────────────────────────────────── */
+    .panel-section {
+      background: #1a1826; border: 1.5px solid #2a2840;
+      border-radius: 18px; overflow: hidden;
+    }
+    .panel-section-head {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 1.1rem 1.5rem; border-bottom: 1px solid #2a2840;
+    }
+    .panel-section-icon {
+      width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+      background: linear-gradient(135deg, rgba(244,114,182,0.15), rgba(167,139,250,0.15));
+      display: flex; align-items: center; justify-content: center;
+    }
+    .panel-section-icon svg { width: 18px; height: 18px; color: #f472b6; stroke: #f472b6; }
+    .panel-section-title { font-weight: 700; font-size: 0.95rem; color: #fff; }
+    .panel-section-desc  { font-size: 0.8rem; color: #8878aa; margin-top: 1px; }
+    .panel-section-body  { padding: 1.25rem 1.5rem; }
+
+    /* ── OVERVIEW STATS ──────────────────────────────────────── */
+    .overview-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.85rem;
+    }
+    .ov-stat {
+      background: #13111a; border: 1.5px solid #2a2840; border-radius: 14px;
+      padding: 1rem 0.85rem; text-align: center;
+    }
+    .ov-stat-value { font-size: 1.5rem; font-weight: 800; color: #fff; line-height: 1; }
+    .ov-stat-label { font-size: 0.75rem; color: #8878aa; margin-top: 0.3rem; }
+    .ov-stat.green .ov-stat-value { color: #4ade80; }
+    .ov-stat.yellow .ov-stat-value { color: #fbbf24; }
+    .ov-stat.red .ov-stat-value   { color: #f87171; }
+    .ov-stat.pink .ov-stat-value  {
+      background: linear-gradient(135deg, #f472b6, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    /* ── SERVICE TOGGLES ─────────────────────────────────────── */
+    .svc-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.85rem 0; border-bottom: 1px solid #2a2840; gap: 1rem;
+    }
+    .svc-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .svc-row:first-child { padding-top: 0; }
+    .svc-name {
+      display: flex; align-items: center; gap: 0.6rem;
+      font-weight: 600; font-size: 0.9rem; color: #d4c9f0; min-width: 160px;
+    }
+    .svc-icon-sm {
+      width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+      background: linear-gradient(135deg, rgba(244,114,182,0.12), rgba(167,139,250,0.12));
+      display: flex; align-items: center; justify-content: center;
+    }
+    .svc-icon-sm svg { width: 14px; height: 14px; stroke: #a78bfa; }
+    .svc-icon-sm svg[fill="currentColor"] { fill: #a78bfa; stroke: none; }
+    .toggle-group {
+      display: flex; gap: 0.4rem; flex-wrap: wrap;
+    }
+    .tgl {
+      padding: 0.35rem 0.85rem; border-radius: 8px; cursor: pointer;
+      font-size: 0.78rem; font-weight: 600; font-family: inherit;
+      border: 1.5px solid transparent; transition: all 0.15s;
+      background: #13111a; color: #8878aa; border-color: #2a2840;
+    }
+    .tgl:hover { border-color: #4a3f70; color: #d4c9f0; }
+    .tgl.sel-operational { background: rgba(74,222,128,0.15);  color: #4ade80; border-color: rgba(74,222,128,0.4); }
+    .tgl.sel-degraded    { background: rgba(251,191,36,0.15);  color: #fbbf24; border-color: rgba(251,191,36,0.4); }
+    .tgl.sel-outage      { background: rgba(248,113,113,0.15); color: #f87171; border-color: rgba(248,113,113,0.4); }
+
+    /* ── ANNOUNCEMENT ────────────────────────────────────────── */
+    .panel-textarea {
+      width: 100%; box-sizing: border-box;
+      background: #13111a; border: 1.5px solid #2a2840; border-radius: 12px;
+      padding: 0.85rem 1rem; color: #d4c9f0; font-size: 0.9rem;
+      font-family: inherit; outline: none; resize: vertical; min-height: 80px;
+      transition: border-color 0.2s;
+    }
+    .panel-textarea:focus { border-color: #a78bfa; }
+    .panel-hint { font-size: 0.78rem; color: #5c5278; margin-top: 0.5rem; }
+
+    /* ── MAINTENANCE TOGGLE ──────────────────────────────────── */
+    .maint-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .maint-info h4 { font-size: 0.95rem; font-weight: 600; color: #d4c9f0; margin: 0 0 0.2rem; }
+    .maint-info p  { font-size: 0.82rem; color: #8878aa; margin: 0; }
+    .switch-wrap { flex-shrink: 0; }
+    .switch { position: relative; display: inline-block; width: 52px; height: 28px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; inset: 0; cursor: pointer;
+      background: #2a2840; border-radius: 100px; transition: 0.3s;
+    }
+    .slider::before {
+      content: ''; position: absolute;
+      width: 20px; height: 20px; border-radius: 50%;
+      left: 4px; top: 4px;
+      background: #8878aa; transition: 0.3s;
+    }
+    input:checked + .slider { background: rgba(248,113,113,0.4); }
+    input:checked + .slider::before { transform: translateX(24px); background: #f87171; }
+
+    /* ── JSON SECTION ────────────────────────────────────────── */
+    .json-actions { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .json-btn {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      padding: 0.55rem 1.1rem; border-radius: 10px; cursor: pointer;
+      font-size: 0.85rem; font-weight: 600; font-family: inherit;
+      border: 1.5px solid transparent; transition: all 0.15s;
+    }
+    .json-btn svg { width: 15px; height: 15px; }
+    .json-btn-generate {
+      background: linear-gradient(135deg, #f472b6, #a78bfa);
+      color: #fff; border-color: transparent;
+    }
+    .json-btn-generate:hover { opacity: 0.88; }
+    .json-btn-copy {
+      background: rgba(167,139,250,0.12); color: #a78bfa; border-color: rgba(167,139,250,0.3);
+    }
+    .json-btn-copy:hover { background: rgba(167,139,250,0.22); }
+    .json-btn-download {
+      background: rgba(74,222,128,0.1); color: #4ade80; border-color: rgba(74,222,128,0.3);
+    }
+    .json-btn-download:hover { background: rgba(74,222,128,0.2); }
+    .json-preview-box {
+      background: #0f0d17; border: 1.5px solid #2a2840;
+      border-radius: 12px; padding: 1rem 1.25rem;
+      font-family: 'Courier New', monospace; font-size: 0.82rem;
+      color: #c4b5fd; line-height: 1.7; overflow-x: auto;
+      white-space: pre; min-height: 80px;
+    }
+    .json-instructions {
+      margin-top: 1rem; padding: 0.9rem 1rem;
+      background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.2);
+      border-radius: 12px; font-size: 0.82rem; color: #a78bfa; line-height: 1.6;
+    }
+    .json-instructions ol { margin: 0.4rem 0 0 1.1rem; padding: 0; }
+    .json-instructions li { margin-bottom: 0.2rem; }
+    .copy-success {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      font-size: 0.78rem; color: #4ade80; font-weight: 600;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .copy-success.show { opacity: 1; }
+    .copy-success svg { width: 13px; height: 13px; }
+
+    /* ── STATUS PREVIEW ──────────────────────────────────────── */
+    .preview-bar {
+      display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+    }
+    .preview-pill {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.3rem 0.8rem; border-radius: 100px;
+      font-size: 0.8rem; font-weight: 600;
+    }
+    .preview-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .pill-op   { background: rgba(74,222,128,0.12);  color: #4ade80; }
+    .pill-op .preview-dot { background: #4ade80; }
+    .pill-deg  { background: rgba(251,191,36,0.12);  color: #fbbf24; }
+    .pill-deg .preview-dot { background: #fbbf24; }
+    .pill-out  { background: rgba(248,113,113,0.12); color: #f87171; }
+    .pill-out .preview-dot { background: #f87171; }
+
+    /* ── QUICK LINKS ─────────────────────────────────────────── */
+    .quick-links { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .ql {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.55rem 1rem; border-radius: 10px; text-decoration: none;
+      font-size: 0.85rem; font-weight: 600; transition: background 0.15s;
+      background: #13111a; border: 1.5px solid #2a2840; color: #d4c9f0;
+    }
+    .ql:hover { border-color: #4a3f70; color: #fff; }
+    .ql svg { width: 15px; height: 15px; stroke: #a78bfa; }
+
+    /* ── REASON INPUT ────────────────────────────────────────── */
+    .svc-reason-wrap { width: 100%; margin-top: 0.55rem; display: none; }
+    .svc-reason-wrap.show { display: block; }
+    .svc-reason-input {
+      width: 100%; box-sizing: border-box;
+      background: #13111a; border: 1.5px solid #2a2840; border-radius: 9px;
+      padding: 0.5rem 0.85rem; color: #d4c9f0; font-size: 0.82rem;
+      font-family: inherit; outline: none; transition: border-color 0.2s;
+      resize: vertical; min-height: 44px;
+    }
+    .svc-reason-input:focus { border-color: #a78bfa; }
+    .svc-reason-label {
+      font-size: 0.72rem; color: #8878aa; margin-bottom: 0.3rem; font-weight: 600;
+    }
+    .svc-row { flex-wrap: wrap; }
+
+    /* ── LAST UPDATED ────────────────────────────────────────── */
+    .ov-updated {
+      margin-top: 0.85rem; padding: 0.65rem 1rem;
+      background: rgba(167,139,250,0.07); border: 1px solid rgba(167,139,250,0.18);
+      border-radius: 10px; font-size: 0.8rem; color: #8878aa;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .ov-updated svg { width: 14px; height: 14px; stroke: #a78bfa; flex-shrink: 0; }
+
+    /* ── TOAST ───────────────────────────────────────────────── */
+    .owner-toast {
+      position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: #1a1826; border: 1.5px solid #2a2840;
+      border-radius: 12px; padding: 0.7rem 1.25rem;
+      display: flex; align-items: center; gap: 0.55rem;
+      font-size: 0.85rem; font-weight: 600; color: #d4c9f0;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 999;
+      transition: transform 0.3s, opacity 0.3s; opacity: 0; white-space: nowrap;
+    }
+    .owner-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .owner-toast svg { width: 16px; height: 16px; }
+    .owner-toast.toast-ok  { border-color: rgba(74,222,128,0.4); }
+    .owner-toast.toast-ok svg  { stroke: #4ade80; }
+    .owner-toast.toast-err { border-color: rgba(248,113,113,0.4); }
+    .owner-toast.toast-err svg { stroke: #f87171; }
+
+    /* ── LIVE BADGE ──────────────────────────────────────────── */
+    .live-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.65rem;
+      border-radius: 100px; background: rgba(74,222,128,0.12);
+      color: #4ade80; border: 1px solid rgba(74,222,128,0.3);
+      margin-left: auto;
+    }
+    .live-badge-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: #4ade80;
+      animation: pulse-glow 1.5s infinite;
+    }
+
+    /* ── ACTIVITY LOG ────────────────────────────────────────── */
+    .activity-log { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.85rem; }
+    .activity-item {
+      display: flex; align-items: center; gap: 0.65rem;
+      padding: 0.55rem 0.85rem; border-radius: 10px;
+      background: #13111a; border: 1px solid #2a2840;
+      font-size: 0.8rem; color: #d4c9f0;
+    }
+    .activity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .activity-dot.op  { background: #4ade80; }
+    .activity-dot.deg { background: #fbbf24; }
+    .activity-dot.out { background: #f87171; }
+    .activity-dot.ann { background: #a78bfa; }
+    .activity-dot.mnt { background: #f87171; }
+    .activity-time { font-size: 0.72rem; color: #5c5278; margin-left: auto; white-space: nowrap; }
+    .activity-empty { font-size: 0.82rem; color: #5c5278; text-align: center; padding: 0.85rem 0; }
+
+    /* ── QUICK ACTIONS ───────────────────────────────────────── */
+    .qa-grid { display: flex; gap: 0.65rem; flex-wrap: wrap; }
+    .qa-btn {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      padding: 0.55rem 1.1rem; border-radius: 10px; cursor: pointer;
+      font-size: 0.85rem; font-weight: 600; font-family: inherit;
+      border: 1.5px solid transparent; transition: all 0.15s;
+    }
+    .qa-btn svg { width: 14px; height: 14px; }
+    .qa-btn-green { background: rgba(74,222,128,0.12); color: #4ade80; border-color: rgba(74,222,128,0.3); }
+    .qa-btn-green:hover { background: rgba(74,222,128,0.22); }
+    .qa-btn-yellow { background: rgba(251,191,36,0.12); color: #fbbf24; border-color: rgba(251,191,36,0.3); }
+    .qa-btn-yellow:hover { background: rgba(251,191,36,0.22); }
+    .qa-btn-red { background: rgba(248,113,113,0.12); color: #f87171; border-color: rgba(248,113,113,0.3); }
+    .qa-btn-red:hover { background: rgba(248,113,113,0.22); }
+    .qa-btn-grey { background: rgba(167,139,250,0.1); color: #a78bfa; border-color: rgba(167,139,250,0.25); }
+    .qa-btn-grey:hover { background: rgba(167,139,250,0.2); }
+
+    /* ── BROADCAST STRIP ─────────────────────────────────────── */
+    .broadcast-strip {
+      margin-top: 0.85rem; padding: 0.65rem 1rem;
+      background: rgba(74,222,128,0.07); border: 1px solid rgba(74,222,128,0.2);
+      border-radius: 10px; font-size: 0.8rem; color: #4ade80;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .broadcast-strip svg { width: 14px; height: 14px; stroke: #4ade80; flex-shrink: 0; }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 700px) {
+      .overview-grid { grid-template-columns: repeat(2, 1fr); }
+      .svc-row { flex-direction: column; align-items: flex-start; }
+      .maint-row { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+    }
+    @media (max-width: 420px) {
+      .overview-grid { grid-template-columns: 1fr 1fr; }
+      .panel-topbar { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── PASSWORD GATE ──────────────────────────────────────── -->
+  <div id="gate">
+    <div class="gate-card">
+      <img src="aimo-logo.png" alt="Aimo" class="gate-logo" />
+      <div>
+        <h1 class="gate-title">Owner Panel</h1>
+        <p class="gate-sub">Restricted access — Aimo admins only</p>
+      </div>
+      <form class="gate-form" id="loginForm" autocomplete="on">
+        <div class="gate-input-wrap">
+          <input type="password" id="pwInput" class="gate-input"
+                 placeholder="Enter password" autocomplete="current-password" />
+          <button type="button" class="gate-eye" id="eyeBtn" aria-label="Show/hide password">
+            <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+        <p class="gate-error" id="loginErr"></p>
+        <button type="submit" class="gate-btn" id="loginBtn">Unlock Panel</button>
+      </form>
+      <p class="gate-hint">This page is unlisted — do not share the URL.</p>
+    </div>
+  </div>
+
+  <!-- ── OWNER PANEL ────────────────────────────────────────── -->
+  <div id="panel">
+
+    <!-- TOP BAR -->
+    <div class="panel-topbar">
+      <div class="panel-brand">
+        <img src="aimo-logo.png" alt="Aimo" />
+        <span class="panel-brand-name">Aimo</span>
+        <span class="panel-brand-badge">Owner Panel</span>
+      </div>
+      <div class="panel-topbar-right">
+        <div class="panel-status-dot"></div>
+        <span class="panel-session" id="sessionTime">Logged in</span>
+        <button class="logout-btn" onclick="doLogout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </button>
+      </div>
+    </div>
+
+    <div class="panel-body">
+
+      <!-- OVERVIEW -->
+      <div class="panel-section">
+        <div class="panel-section-head">
+          <div class="panel-section-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </div>
+          <div style="flex:1;">
+            <div class="panel-section-title">Overview</div>
+            <div class="panel-section-desc">Current service health at a glance</div>
+          </div>
+          <span class="live-badge"><span class="live-badge-dot"></span>Live</span>
+        </div>
+        <div class="panel-section-body">
+          <div class="overview-grid">
+            <div class="ov-stat green">
+              <div class="ov-stat-value" id="ovOnline">—</div>
+              <div class="ov-stat-label">Online</div>
+            </div>
+            <div class="ov-stat yellow">
+              <div class="ov-stat-value" id="ovDegraded">—</div>
+              <div class="ov-stat-label">Degraded</div>
+            </div>
+            <div class="ov-stat red">
+              <div class="ov-stat-value" id="ovOutage">—</div>
+              <div class="ov-stat-label">Outage</div>
+            </div>
+            <div class="ov-stat pink">
+              <div class="ov-stat-value" id="ovRate">—</div>
+              <div class="ov-stat-label">Health Rate</div>
+            </div>
+          </div>
+          <div style="margin-top:1rem;" id="previewBar">
+            <!-- Status pills shown here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- SERVICE CONTROLS -->
+      <div class="panel-section">
+        <div class="panel-section-head">
+          <div class="panel-section-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3h1V6a4 4 0 0 1 4-4z"/></svg>
+          </div>
+          <div>
+            <div class="panel-section-title">Service Status Controls</div>
+            <div class="panel-section-desc">Toggle each service — changes auto-broadcast to open status page tabs instantly</div>
+          </div>
+        </div>
+        <div class="panel-section-body" id="serviceControls">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="panel-section">
+        <div class="panel-section-head">
+          <div class="panel-section-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <div>
+            <div class="panel-section-title">Quick Actions</div>
+            <div class="panel-section-desc">Apply a status to all services at once, or clear all reasons</div>
+          </div>
+        </div>
+        <div class="panel-section-body">
+          <div class="qa-grid">
+            <button class="qa-btn qa-btn-green" onclick="setAllStatus('operational')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Set All Online
+            </button>
+            <button class="qa-btn qa-btn-yellow" onclick="setAllStatus('degraded')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+              Set All Slow
+            </button>
+            <button class="qa-btn qa-btn-red" onclick="setAllStatus('outage')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              Set All Off
+            </button>
+            <button class="qa-btn qa-btn-grey" onclick="clearAllReasons()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+              Clear All Reasons
+            </button>
+          </div>
+          <div class="broadcast-strip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 6c0 0 5-2 11-2s11 2 11 2"/><path d="M5 10c0 0 3-1 7-1s7 1 7 1"/><path d="M9 14c0 0 1-.5 3-.5s3 .5 3 .5"/><circle cx="12" cy="18" r="1" fill="#4ade80" stroke="none"/></svg>
+            Changes instantly broadcast to all open Status Page tabs in the same browser
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIVITY LOG -->
+      <div class="panel-section">
+        <div class="panel-section-head">
+          <div class="panel-section-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          <div>
+            <div class="panel-section-title">Activity Log</div>
+            <div class="panel-section-desc">Changes made during this session</div>
+          </div>
+        </div>
+        <div class="panel-section-body">
+          <div class="activity-log" id="activityLog">
+            <div class="activity-empty" id="activityEmpty">No changes yet this session</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANNOUNCEMENT -->
+      <div class="panel-section">
+        <div class="panel-section-head">
+          <div class="panel-section-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+          </div>
+          <div>
+            <div class="panel-section-title">Announcement Banner</div>
+            <div class="panel-section-desc">Shown in a yellow notice bar at the top of the status page</div>
+          </div>
+        </div>
+        <div class="panel-section-body">
+          <textarea id="announcementInput" class="panel-textarea" maxlength="300"
+                    placeholder="Type an announcement for users… (leave empty to hide the banner)"></textarea>
+          <div class="panel-hint">Max 300 characters — leave blank to hide. <span id="annCharCount">0 / 300</span></div>
+        </div>
+      </div>
+
+      <!-- MAINTENANCE MODE -->
+      <div class="panel-section">
+        <div class="panel-section-head">
+          <div class="panel-section-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M5.34 18.66l-1.41 1.41M19.07 19.07l-1.41-1.41M5.34 5.34L3.93 3.93M21 12h-2M5 12H3M12 21v-2M12 5V3"/></svg>
+          </div>
+          <div>
+            <div class="panel-section-title">Maintenance Mode</div>
+            <div class="panel-section-desc">Shows a red maintenance banner and marks overall status as scheduled maintenance</div>
+          </div>
+        </div>
+        <div class="panel-section-body">
+          <div class="maint-row">
+            <div class="maint-info">
+              <h4>Enable Maintenance Mode</h4>
+              <p>Users will see a red banner: "Scheduled maintenance is in progress."</p>
+            </div>
+            <div class="switch-wrap">
+              <label class="switch">
+                <input type="checkbox" id="maintToggle" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- JSON EXPORT -->
+      <div class="panel-section">
+        <div class="panel-section-head">
+          <div class="panel-section-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <div>
+            <div class="panel-section-title">Generate & Export JSON</div>
+            <div class="panel-section-desc">Build the <code style="font-size:0.8rem;color:#a78bfa;background:rgba(167,139,250,0.12);padding:0.1rem 0.35rem;border-radius:5px;">service-status.json</code> file from your settings above</div>
+          </div>
+        </div>
+        <div class="panel-section-body">
+          <div class="json-actions">
+            <button class="json-btn json-btn-generate" onclick="generateJson()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+              Generate JSON
+            </button>
+            <button class="json-btn json-btn-copy" onclick="copyJson()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy JSON
+            </button>
+            <button class="json-btn json-btn-download" onclick="downloadJson()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download JSON
+            </button>
+            <span class="copy-success" id="copyOk">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Copied!
+            </span>
+          </div>
+          <pre class="json-preview-box" id="jsonPreview">Press "Generate JSON" to build your service-status.json content.</pre>
+          <div class="json-instructions">
+            <strong>How to apply changes:</strong>
+            <ol>
+              <li>Adjust the service states and announcement above.</li>
+              <li>Click <strong>Generate JSON</strong> to preview the output.</li>
+              <li>Click <strong>Copy JSON</strong> or <strong>Download JSON</strong>.</li>
+              <li>Paste/replace the content of <code>service-status.json</code> in your project files.</li>
+              <li>Save the file — the status page will update on its next poll (within 10 seconds).</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK LINKS -->
+      <div class="panel-section">
+        <div class="panel-section-head">
+          <div class="panel-section-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <div>
+            <div class="panel-section-title">Quick Links</div>
+            <div class="panel-section-desc">Jump to key pages</div>
+          </div>
+        </div>
+        <div class="panel-section-body">
+          <div class="quick-links">
+            <a href="status.html" target="_blank" class="ql">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Status Page
+            </a>
+            <a href="report.html" target="_blank" class="ql">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+              Report Page
+            </a>
+            <a href="index.html" target="_blank" class="ql">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              Homepage
+            </a>
+            <a href="commands.html" target="_blank" class="ql">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              Commands
+            </a>
+            <a href="https://discord.gg/9rSar8Kssg" target="_blank" rel="noopener" class="ql">
+              <svg viewBox="0 0 24 24" fill="currentColor" style="stroke:none;"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.073.11 18.09.12 18.1a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 12.46 12.46 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.1.246.198.373.292a.077.077 0 0 1-.006.127c-.598.35-1.22.645-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+              Support Server
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="owner-toast" id="ownerToast">
+    <svg id="toastSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg>
+    <span id="toastTxt"></span>
+  </div>
+
+  <script>
+  /* ── PASSWORD CHECK ──────────────────────────────────────── */
+  const CORRECT_HASH = '80f3120084a2077c77be8fecc9506924aafc2163232fb97a4f03ba1d56a5e7fb';
+
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  const SESSION_KEY = 'aimo_owner_auth';
+  function isAuthed() { return sessionStorage.getItem(SESSION_KEY) === '1'; }
+  function setAuthed() { sessionStorage.setItem(SESSION_KEY, '1'); }
+  function clearAuthed() { sessionStorage.removeItem(SESSION_KEY); }
+
+  if (isAuthed()) showPanel();
+
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pw  = document.getElementById('pwInput').value;
+    const btn = document.getElementById('loginBtn');
+    const err = document.getElementById('loginErr');
+    btn.disabled = true;
+    btn.textContent = 'Checking…';
+    err.textContent = '';
+    document.getElementById('pwInput').classList.remove('err');
+    const hash = await sha256(pw);
+    if (hash === CORRECT_HASH) {
+      setAuthed();
+      showPanel();
+    } else {
+      document.getElementById('pwInput').classList.add('err');
+      err.textContent = 'Incorrect password. Try again.';
+      document.getElementById('pwInput').value = '';
+      btn.disabled = false;
+      btn.textContent = 'Unlock Panel';
+    }
+  });
+
+  // Show/hide password
+  let pwVisible = false;
+  document.getElementById('eyeBtn').addEventListener('click', () => {
+    pwVisible = !pwVisible;
+    const inp = document.getElementById('pwInput');
+    inp.type = pwVisible ? 'text' : 'password';
+    document.getElementById('eyeIcon').innerHTML = pwVisible
+      ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
+      : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  });
+
+  function doLogout() {
+    clearAuthed();
+    document.getElementById('panel').style.display = 'none';
+    document.getElementById('gate').style.display  = 'flex';
+    document.getElementById('pwInput').value = '';
+    document.getElementById('loginErr').textContent = '';
+    document.getElementById('loginBtn').textContent = 'Unlock Panel';
+    document.getElementById('loginBtn').disabled = false;
+  }
+
+  /* ── BROADCAST CHANNEL ───────────────────────────────────── */
+  const statusChannel = new BroadcastChannel('aimo-status');
+
+  /* ── ACTIVITY LOG ────────────────────────────────────────── */
+  const activityEntries = [];
+  function logActivity(msg, type) {
+    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    activityEntries.unshift({ msg, type, time: now });
+    if (activityEntries.length > 12) activityEntries.pop();
+    const log  = document.getElementById('activityLog');
+    const empty = document.getElementById('activityEmpty');
+    if (!log) return;
+    if (empty) empty.remove();
+    const dotClass = type === 'operational' ? 'op' : type === 'degraded' ? 'deg' : type === 'outage' ? 'out' : type === 'ann' ? 'ann' : 'mnt';
+    log.innerHTML = activityEntries.map(e => {
+      const dc = e.type === 'operational' ? 'op' : e.type === 'degraded' ? 'deg' : e.type === 'outage' ? 'out' : e.type === 'ann' ? 'ann' : 'mnt';
+      return `<div class="activity-item"><span class="activity-dot ${dc}"></span><span>${e.msg}</span><span class="activity-time">${e.time}</span></div>`;
+    }).join('');
+  }
+
+  /* ── BUILD STATUS OBJECT ─────────────────────────────────── */
+  function buildStatusObj() {
+    const announcement = document.getElementById('announcementInput') ? document.getElementById('announcementInput').value.trim().slice(0, 300) : '';
+    const maintenance  = document.getElementById('maintToggle') ? document.getElementById('maintToggle').checked : false;
+    const obj = {};
+    SERVICES.forEach(s => { obj[s.key] = getState(s.key); });
+    obj.maintenance  = maintenance;
+    obj.announcement = announcement;
+    const reasons = {};
+    SERVICES.forEach(s => {
+      const el = document.getElementById(`reason-${s.key}`);
+      reasons[s.key] = el ? el.value.trim() : '';
+    });
+    obj.reasons = reasons;
+    obj.updated_at = new Date().toISOString();
+    return obj;
+  }
+
+  /* ── BROADCAST + AUTO-PREVIEW ────────────────────────────── */
+  function broadcastStatus() {
+    const obj = buildStatusObj();
+    try { statusChannel.postMessage(obj); } catch {}
+    lastJson = JSON.stringify(obj, null, 2);
+    const preview = document.getElementById('jsonPreview');
+    if (preview) preview.textContent = lastJson;
+  }
+
+  /* ── SET ALL SERVICES ────────────────────────────────────── */
+  function setAllStatus(val) {
+    SERVICES.forEach(s => setState(s.key, val, false));
+    broadcastStatus();
+    updateOverview();
+    const label = val === 'operational' ? 'Online' : val === 'degraded' ? 'Slow' : 'Off';
+    logActivity(`All services set to ${label}`, val);
+    showToast(`All services set to ${label}`, 'ok');
+  }
+
+  /* ── CLEAR ALL REASONS ───────────────────────────────────── */
+  function clearAllReasons() {
+    SERVICES.forEach(s => {
+      const el = document.getElementById(`reason-${s.key}`);
+      if (el) el.value = '';
+    });
+    broadcastStatus();
+    logActivity('All reasons cleared', 'ann');
+    showToast('All reasons cleared', 'ok');
+  }
+
+  /* ── SERVICES CONFIG ─────────────────────────────────────── */
+  const SERVICES = [
+    { key: 'bot',      label: 'Discord Bot',          icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.073.11 18.09.12 18.1a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 12.46 12.46 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.1.246.198.373.292a.077.077 0 0 1-.006.127c-.598.35-1.22.645-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>' },
+    { key: 'lavalink', label: 'Lavalink / Music',     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>' },
+    { key: 'commands', label: 'Slash Commands',        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>' },
+    { key: 'playlists',label: 'Playlists & Favourites',icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>' },
+    { key: 'spotify',  label: 'Spotify Integration',  icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 11.5a7 7 0 0 1 8 0"/><path d="M9.5 14.5a4.5 4.5 0 0 1 5 0"/><circle cx="12" cy="17" r="1" fill="currentColor" stroke="none"/></svg>' },
+    { key: 'ai',       label: 'AI Assistant',          icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-7a3 3 0 0 1 3-3h1V6a4 4 0 0 1 4-4z"/><circle cx="9" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="13" r="1" fill="currentColor" stroke="none"/></svg>' },
+    { key: 'website',  label: 'Website',               icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>' },
+    { key: 'support',  label: 'Support Server',        icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.073.11 18.09.12 18.1a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 12.46 12.46 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.1.246.198.373.292a.077.077 0 0 1-.006.127c-.598.35-1.22.645-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>' },
+  ];
+
+  const svcStates = {};
+
+  function getState(key) { return svcStates[key] || 'operational'; }
+  function setState(key, val, shouldBroadcast = true) {
+    const prev = svcStates[key];
+    svcStates[key] = val;
+    document.querySelectorAll(`[data-svc="${key}"] .tgl`).forEach(t => {
+      t.className = 'tgl' + (t.dataset.state === val ? ` sel-${val}` : '');
+    });
+    const wrap = document.getElementById(`reason-wrap-${key}`);
+    if (wrap) {
+      if (val === 'degraded' || val === 'outage') {
+        wrap.classList.add('show');
+      } else {
+        wrap.classList.remove('show');
+      }
+    }
+    if (shouldBroadcast && prev !== val) {
+      const svc = SERVICES.find(s => s.key === key);
+      const label = val === 'operational' ? 'Online' : val === 'degraded' ? 'Slow' : 'Off';
+      logActivity(`${svc ? svc.label : key} → ${label}`, val);
+      broadcastStatus();
+    }
+    updateOverview();
+  }
+
+  function buildServiceControls() {
+    const c = document.getElementById('serviceControls');
+    c.innerHTML = SERVICES.map(s => `
+      <div class="svc-row" data-svc="${s.key}">
+        <div class="svc-name">
+          <div class="svc-icon-sm">${s.icon}</div>
+          ${s.label}
+        </div>
+        <div class="toggle-group">
+          <button class="tgl sel-operational" data-state="operational" onclick="setState('${s.key}','operational')">Operational</button>
+          <button class="tgl" data-state="degraded"    onclick="setState('${s.key}','degraded')">Degraded</button>
+          <button class="tgl" data-state="outage"      onclick="setState('${s.key}','outage')">Outage</button>
+        </div>
+        <div class="svc-reason-wrap" id="reason-wrap-${s.key}">
+          <div class="svc-reason-label">Reason shown to users (optional)</div>
+          <textarea class="svc-reason-input" id="reason-${s.key}" placeholder="Explain why ${s.label} is affected…"></textarea>
+        </div>
+      </div>`).join('');
+    SERVICES.forEach(s => svcStates[s.key] = 'operational');
+  }
+
+  function updateOverview() {
+    const vals = SERVICES.map(s => getState(s.key));
+    const online    = vals.filter(v => v !== 'outage').length;
+    const degraded  = vals.filter(v => v === 'degraded').length;
+    const outage    = vals.filter(v => v === 'outage').length;
+    const rate      = Math.round((vals.filter(v => v === 'operational').length / vals.length) * 100);
+    document.getElementById('ovOnline').textContent   = String(online);
+    document.getElementById('ovDegraded').textContent = String(degraded);
+    document.getElementById('ovOutage').textContent   = String(outage);
+    document.getElementById('ovRate').textContent     = rate + '%';
+
+    const bar = document.getElementById('previewBar');
+    bar.innerHTML = '<div class="preview-bar">' + SERVICES.map(s => {
+      const st = getState(s.key);
+      const cls = st === 'operational' ? 'pill-op' : st === 'degraded' ? 'pill-deg' : 'pill-out';
+      const lbl = st === 'operational' ? 'Online' : st === 'degraded' ? 'Slow' : 'Off';
+      return `<span class="preview-pill ${cls}"><span class="preview-dot"></span>${s.label.split(' ')[0]}: <strong>${lbl}</strong></span>`;
+    }).join('') + '</div>';
+  }
+
+  /* ── SESSION TIMER ───────────────────────────────────────── */
+  let loginTime = Date.now();
+  function updateSession() {
+    const mins = Math.floor((Date.now() - loginTime) / 60000);
+    const secs = Math.floor(((Date.now() - loginTime) % 60000) / 1000);
+    document.getElementById('sessionTime').textContent =
+      `Session: ${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+  }
+
+  /* ── LOAD CURRENT STATUS ─────────────────────────────────── */
+  async function loadCurrentStatus() {
+    try {
+      const r = await fetch('service-status.json?_=' + Date.now());
+      if (!r.ok) return;
+      const d = await r.json();
+      const STATES = ['operational', 'degraded', 'outage'];
+      SERVICES.forEach(s => {
+        const val = (d[s.key] || 'operational').toLowerCase();
+        svcStates[s.key] = STATES.includes(val) ? val : 'operational';
+        document.querySelectorAll(`[data-svc="${s.key}"] .tgl`).forEach(t => {
+          t.className = 'tgl' + (t.dataset.state === svcStates[s.key] ? ` sel-${svcStates[s.key]}` : '');
+        });
+        const wrap = document.getElementById(`reason-wrap-${s.key}`);
+        if (wrap) {
+          if (svcStates[s.key] === 'degraded' || svcStates[s.key] === 'outage') {
+            wrap.classList.add('show');
+          } else {
+            wrap.classList.remove('show');
+          }
+        }
+        if (d.reasons && typeof d.reasons[s.key] === 'string') {
+          const inp = document.getElementById(`reason-${s.key}`);
+          if (inp) inp.value = d.reasons[s.key];
+        }
+      });
+      if (typeof d.announcement === 'string') {
+        document.getElementById('announcementInput').value = d.announcement;
+        updateAnnCount();
+      }
+      if (d.maintenance === true) document.getElementById('maintToggle').checked = true;
+      updateOverview();
+      showToast('Loaded current service-status.json', 'ok');
+    } catch { showToast('Could not load service-status.json', 'err'); }
+  }
+
+  /* ── ANNOUNCEMENT CHAR COUNT ─────────────────────────────── */
+  function updateAnnCount() {
+    const l = document.getElementById('announcementInput').value.length;
+    document.getElementById('annCharCount').textContent = `${l} / 300`;
+  }
+
+  /* ── JSON GENERATION ─────────────────────────────────────── */
+  let lastJson = '';
+  function generateJson() {
+    const obj = buildStatusObj();
+    lastJson = JSON.stringify(obj, null, 2);
+    document.getElementById('jsonPreview').textContent = lastJson;
+    broadcastStatus();
+    showToast('JSON generated — ready to copy or download', 'ok');
+  }
+
+  function copyJson() {
+    if (!lastJson) { showToast('Generate JSON first', 'err'); return; }
+    navigator.clipboard.writeText(lastJson).then(() => {
+      const el = document.getElementById('copyOk');
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2500);
+      showToast('JSON copied to clipboard!', 'ok');
+    }).catch(() => showToast('Copy failed — try manually selecting the text', 'err'));
+  }
+
+  function downloadJson() {
+    if (!lastJson) { generateJson(); }
+    const blob = new Blob([lastJson || '{}'], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'service-status.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('service-status.json downloaded', 'ok');
+  }
+
+  /* ── TOAST ───────────────────────────────────────────────── */
+  let toastTimer;
+  function showToast(msg, type) {
+    clearTimeout(toastTimer);
+    const el  = document.getElementById('ownerToast');
+    const svg = document.getElementById('toastSvg');
+    document.getElementById('toastTxt').textContent = msg;
+    el.className = `owner-toast toast-${type} show`;
+    svg.innerHTML = type === 'ok'
+      ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>'
+      : '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>';
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+  }
+
+  /* ── SHOW PANEL ──────────────────────────────────────────── */
+  function showPanel() {
+    document.getElementById('gate').style.display  = 'none';
+    document.getElementById('panel').style.display = 'block';
+    loginTime = Date.now();
+    buildServiceControls();
+    updateOverview();
+    loadCurrentStatus();
+    setInterval(updateSession, 1000);
+
+    const annInput = document.getElementById('announcementInput');
+    annInput.addEventListener('input', () => {
+      updateAnnCount();
+      broadcastStatus();
+    });
+
+    const maintToggle = document.getElementById('maintToggle');
+    maintToggle.addEventListener('change', () => {
+      const on = maintToggle.checked;
+      logActivity(`Maintenance mode ${on ? 'enabled' : 'disabled'}`, 'mnt');
+      broadcastStatus();
+    });
+
+    document.querySelectorAll('.svc-reason-input').forEach(el => {
+      el.addEventListener('input', () => broadcastStatus());
+    });
+  }
+  </script>
+</body>
+</html>
